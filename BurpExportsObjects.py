@@ -1,6 +1,6 @@
 from burp import IBurpExtender, IRequestInfo, IContextMenuFactory
 from java.io import PrintWriter
-from javax.swing import JMenu, JMenuItem
+from javax.swing import JMenu, JMenuItem, JFileChooser
 
 # File I/O
 from java.io import File, FileOutputStream
@@ -27,13 +27,11 @@ class BurpExtender(IBurpExtender, IRequestInfo, IContextMenuFactory):
 
     def createMenuItems(self, invocation):
         menu = JMenu(self._actionName)
-        menu.add(
-            JMenuItem(
-                "Export",
-                None,
-                actionPerformed=lambda x, inv=invocation: self.Action(inv),
-            )
-        )
+        self._menu_item = JMenuItem("Export",
+                                    None,
+                                    actionPerformed=lambda x,
+                                    inv=invocation: self.Action(inv),)
+        menu.add(self._menu_item)
         return [menu]
 
     def Action(self, invocation):
@@ -41,8 +39,18 @@ class BurpExtender(IBurpExtender, IRequestInfo, IContextMenuFactory):
             http_traffic = invocation.getSelectedMessages()
             traffic_length = len(http_traffic)
             counter = 0
+            self._output_dir = u"/tmp"
 
-            self._stdout.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+            # choose output directory
+            filechooser = JFileChooser()
+            filechooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY)
+
+            selected = filechooser.showSaveDialog(self._menu_item)
+            if selected == JFileChooser.APPROVE_OPTION:
+                f = filechooser.getSelectedFile()
+                self._output_dir = f.getAbsolutePath()
+
+            self._stdout.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
 
             while len(http_traffic) > 0:
                 counter += 1
@@ -68,21 +76,19 @@ class BurpExtender(IBurpExtender, IRequestInfo, IContextMenuFactory):
                                               target_traffic.getResponse())
                     file_name = file_name + "." + ex
 
-                output_dir = "/tmp"
-                file_path = output_dir + "/" + file_name
+                file_path = self._output_dir + u"/" + file_name.encode('utf-8')
                 self._stdout.printf("[%d/%d]\n", counter, traffic_length)
                 self._stdout.printf("url: %s\n", url)
                 self._stdout.printf("status_code: %d\n", status_code)
                 self._stdout.printf("mime_type: %s\n", mime_type)
                 self._stdout.printf("body_offset: %d\n", body_offset)
-                self._stdout.printf("save as \"%s\".\n\n", file_path)
 
                 # extract object
                 self.extract_obj(file_path,
                                  target_traffic.getResponse(),
                                  body_offset)
 
-            self._stdout.println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+            self._stdout.printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n")
 
         except Exception as e:
             self._stderr.println("[!] In Action.")
@@ -91,7 +97,7 @@ class BurpExtender(IBurpExtender, IRequestInfo, IContextMenuFactory):
     def extract_filename(self, url):
         uri = url.toURI()
         path = uri.getPath().encode('utf-8')
-        file_name = path.split("/")[-1]
+        file_name = path.split(u"/")[-1]
         return file_name
 
     def has_extention(self, file_name):
@@ -99,13 +105,13 @@ class BurpExtender(IBurpExtender, IRequestInfo, IContextMenuFactory):
 
     def guess_extention(self, mime, res):
         if mime == "JPEG":
-            return "jpg"
-        elif mime == "GIF":
-            return "gif"
-        elif mime == "PNG":
-            return "png"
+            return u"jpg"
+        elif mime == u"GIF":
+            return u"gif"
+        elif mime == u"PNG":
+            return u"png"
         else:
-            return ""
+            return u""
 
     def extract_obj(self, file_path, res, offset):
         try:
@@ -121,15 +127,17 @@ class BurpExtender(IBurpExtender, IRequestInfo, IContextMenuFactory):
 
                 # Count up the file name.
                 counter += 1
-                stem = "".join(file_path.split(".")[:-1])
-                ex = file_path.split(".")[-1]
+                stem = u"".join(file_path.split(u".")[:-1])
+                ex = file_path.split(u".")[-1]
 
-                _file_path = "{}({}).{}".format(stem, counter, ex)
+                _file_path = u"{}({}).{}".format(stem, counter, ex)
                 f = File(_file_path)
 
             fos = FileOutputStream(f)
 
             fos.write(res[offset:])
+            self._stdout.printf("save as \"%s\".\n\n", f.getPath())
+
             fos.close()
 
         except Exception as e:
