@@ -61,6 +61,13 @@ class BurpExtender(IBurpExtender, IRequestInfo, IContextMenuFactory):
 
                 # resolve filename from url.
                 file_name = self.extract_filename(url)
+
+                # check extention.
+                if not self.has_extention(file_name):
+                    ex = self.guess_extention(mime_type,
+                                              target_traffic.getResponse())
+                    file_name = file_name + "." + ex
+
                 output_dir = "/tmp"
                 file_path = output_dir + "/" + file_name
                 self._stdout.printf("[%d/%d]\n", counter, traffic_length)
@@ -86,6 +93,19 @@ class BurpExtender(IBurpExtender, IRequestInfo, IContextMenuFactory):
         path = uri.getPath().encode('utf-8')
         file_name = path.split("/")[-1]
         return file_name
+
+    def has_extention(self, file_name):
+        return len(file_name.split(".")) > 1
+
+    def guess_extention(self, mime, res):
+        if mime == "JPEG":
+            return "jpg"
+        elif mime == "GIF":
+            return "gif"
+        elif mime == "PNG":
+            return "png"
+        else:
+            return ""
 
     def extract_obj(self, file_path, res, offset):
         try:
