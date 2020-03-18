@@ -121,7 +121,10 @@ class BurpExtender(IBurpExtender, IRequestInfo, IContextMenuFactory):
 
                 # Count up the file name.
                 counter += 1
-                _file_path = "{}({})".format(file_path, counter)
+                stem = "".join(file_path.split(".")[:-1])
+                ex = file_path.split(".")[-1]
+
+                _file_path = "{}({}).{}".format(stem, counter, ex)
                 f = File(_file_path)
 
             fos = FileOutputStream(f)
