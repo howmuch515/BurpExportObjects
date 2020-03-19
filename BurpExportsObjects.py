@@ -104,12 +104,25 @@ class BurpExtender(IBurpExtender, IRequestInfo, IContextMenuFactory):
         return len(file_name.split(".")) > 1
 
     def guess_extention(self, mime, res):
-        if mime == "JPEG":
+        if mime == u"JPEG":
             return u"jpg"
         elif mime == u"GIF":
             return u"gif"
         elif mime == u"PNG":
             return u"png"
+        elif mime == u"HTML":
+            return u"html"
+        elif mime == u"JSON":
+            return u"json"
+        elif mime == "XML":
+            return u"xml"
+        elif mime == "scrip":
+            # Only javascript is supported.
+            return u"js"
+        elif mime == "text":
+            return u"txt"
+        elif mime == "image":
+            return u"ico"
         else:
             return u""
 
