@@ -114,14 +114,14 @@ class BurpExtender(IBurpExtender, IRequestInfo, IContextMenuFactory):
             return u"html"
         elif mime == u"JSON":
             return u"json"
-        elif mime == "XML":
+        elif mime == u"XML":
             return u"xml"
-        elif mime == "scrip":
+        elif mime == u"scrip":
             # Only javascript is supported.
             return u"js"
-        elif mime == "text":
+        elif mime == u"text":
             return u"txt"
-        elif mime == "image":
+        elif mime == u"image":
             return u"ico"
         else:
             return u""
