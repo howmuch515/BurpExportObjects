@@ -67,6 +67,12 @@ class BurpExtender(IBurpExtender, IRequestInfo, IContextMenuFactory):
                 url = analyzedRequest.getUrl()
                 body_offset = analyzedResponse.getBodyOffset()
 
+                # Skip empty response.
+                if len(target_traffic.getResponse()[body_offset:]) <= 0:
+                    self._stdout.printf("[%d/%d]\n", counter, traffic_length)
+                    self._stdout.println("[-] %s's response is empty.", url)
+                    continue
+
                 # resolve filename from url.
                 file_name = self.extract_filename(url)
 
